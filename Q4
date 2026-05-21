@@ -1,0 +1,256 @@
+1. Retrieving Long Documents
+
+Open:
+
+http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file3.html
+Step-by-Step
+Step 1 — Start Wireshark
+
+Apply filter:
+
+http
+Step 2 — Open URL in browser
+
+After webpage loads:
+
+Stop capture.
+a) How many HTTP GET requests were sent?
+
+Look in packet list.
+
+Count lines whose Info column starts with:
+
+GET
+
+Example:
+
+No	Info
+15	GET /HTTP-wireshark-file3.html HTTP/1.1
+
+Usually for this question:
+
+Only 1 GET request
+
+because it is one HTML file.
+
+VERY IMPORTANT
+
+Only count:
+
+GET ...
+
+Do NOT count:
+
+TCP packets
+ACK packets
+HTTP responses
+b) How many TCP segments carried the HTTP Response?
+
+This is the confusing part.
+
+How to Find
+
+Click the:
+
+HTTP/1.1 200 OK
+
+response packet.
+
+Now look below.
+
+Expand:
+
+Transmission Control Protocol
+
+AND/OR
+
+Hypertext Transfer Protocol
+
+Large documents are split across multiple TCP segments.
+
+Easy Method
+
+Use filter:
+
+tcp.stream eq X
+
+Where X is stream number.
+
+OR easier:
+
+Look for multiple packets from:
+
+Server → Your PC
+
+after the 200 OK.
+
+Count all packets carrying:
+
+[TCP segment of a reassembled PDU]
+
+These are the segments carrying the response.
+
+What this Means
+
+HTTP response is large.
+
+TCP breaks it into smaller pieces called segments.
+
+You count those segments.
+
+c) Status code and phrase?
+
+Open response packet:
+
+HTTP/1.1 200 OK
+
+Answer:
+
+Status code = 200
+Phrase = OK
+2. HTML Documents with Embedded Objects
+
+Open:
+
+http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file4.html
+
+This webpage contains images.
+
+a) How many GET requests were sent?
+
+Now browser requests:
+
+HTML page
+Image 1
+Image 2
+
+So usually:
+
+3 GET requests
+How to See
+
+Look for all lines beginning with:
+
+GET
+
+Example:
+
+GET /HTTP-wireshark-file4.html
+GET /pearson.png
+GET /someimage.gif
+To Which Internet Addresses?
+
+Check Source and Destination columns.
+
+OR click GET packet and expand:
+
+Internet Protocol Version 4
+
+Find:
+
+Destination Address:
+
+That is the server IP.
+
+b) Parallel or Serial Download?
+
+This is important.
+
+How to Tell
+
+Look at timestamps.
+
+If second image GET starts only AFTER first image finishes:
+
+→ Serial
+
+If both image GET requests happen nearly same time:
+
+→ Parallel
+
+Usually Modern Browsers
+
+Download in parallel.
+
+You’ll see:
+
+Time	Packet
+5.101	GET image1
+5.102	GET image2
+
+Very close timestamps = parallel download.
+
+Explanation to Write
+The images were downloaded in parallel because the browser sent multiple GET requests almost simultaneously using separate TCP connections.
+3. HTTP Authentication
+
+Open:
+
+http://gaia.cs.umass.edu/wireshark-labs/protected_pages/HTTP-wireshark-file5.html
+
+Login:
+
+Field	Value
+Username	wireshark-students
+Password	network
+What Happens Here?
+Step 1
+
+Browser sends GET request WITHOUT credentials.
+
+Step 2
+
+Server rejects it.
+
+Response:
+
+HTTP/1.1 401 Unauthorized
+
+This is the answer.
+
+Step 3
+
+Browser asks for username/password.
+
+Step 4
+
+Browser sends another GET request containing:
+
+Authorization:
+
+header.
+
+How to Find in Wireshark
+
+Filter:
+
+http
+
+Look for first:
+
+GET /protected_pages/HTTP-wireshark-file5.html
+
+Then immediately after:
+
+HTTP/1.1 401 Unauthorized
+Final Answer
+What is server response to initial GET?
+HTTP/1.1 401 Unauthorized
+
+Meaning:
+
+Authentication required
+Access denied until credentials provided
+EASY CHEAT SHEET
+Task	What to Count
+Number of GETs	Count lines starting with GET
+Response code	Open HTTP response
+TCP segments	Count response TCP packets
+Parallel downloads	Compare timestamps
+Authentication failure	Look for 401 Unauthorized
+Useful Filters
+Purpose	Filter
+Only GETs	http.request.method == "GET"
+Only Responses	http.response
+401 Errors	http.response.code == 401
+TCP stream	tcp.stream eq 0
