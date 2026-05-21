@@ -1,0 +1,348 @@
+DNS Wireshark Lab — Full Detailed Procedure (Ubuntu)
+
+You will:
+
+Capture DNS packets in Wireshark
+Open http://www.ietf.org
+Analyze DNS query & response
+Use nslookup
+Answer all questions
+PART 1 — Capture DNS Traffic
+Step 1 — Open Wireshark
+
+Run:
+
+wireshark
+
+Choose your active interface:
+
+wlan0
+eth0
+etc.
+Step 2 — Apply DNS Filter
+
+In filter bar:
+
+dns
+
+Press Enter.
+
+Now only DNS packets appear.
+
+Step 3 — Clear Browser Cache (IMPORTANT)
+
+Otherwise browser may use cached DNS.
+
+Open terminal:
+
+sudo systemd-resolve --flush-caches
+
+OR
+
+sudo resolvectl flush-caches
+Step 4 — Start Capture
+
+Click blue shark fin.
+
+Step 5 — Open Website
+
+In browser:
+
+http://www.ietf.org
+
+Wait fully loaded.
+
+Stop capture.
+
+Now You’ll See
+
+Typically:
+
+No	Info
+15	Standard query A www.ietf.org
+16	Standard query response A 104.x.x.x
+VERY IMPORTANT
+Query Packet
+
+Starts with:
+
+Standard query
+
+Browser → DNS server
+
+Response Packet
+
+Starts with:
+
+Standard query response
+
+DNS server → Browser
+
+a) Are DNS messages sent over UDP or TCP?
+
+Click DNS query packet.
+
+Expand:
+
+User Datagram Protocol
+
+You’ll usually see:
+
+Protocol: UDP
+
+Answer:
+
+DNS query and response messages are usually sent over UDP.
+
+(Port 53.)
+
+b) Destination port of query? Source port of response?
+DNS Query Packet
+
+Expand:
+
+User Datagram Protocol
+
+Look for:
+
+Destination Port: 53
+
+Because DNS server listens on port 53.
+
+DNS Response Packet
+
+Look for:
+
+Source Port: 53
+
+Answer:
+
+Packet	Port
+Query Destination Port	53
+Response Source Port	53
+c) To what IP address is DNS query sent?
+
+Click DNS query packet.
+
+Expand:
+
+Internet Protocol Version 4
+
+Find:
+
+Destination Address:
+
+Example:
+
+192.168.1.1
+
+This is your DNS server IP.
+
+Find Local DNS Server IP
+
+In Ubuntu terminal:
+
+systemd-resolve --status
+
+OR
+
+nmcli dev show | grep DNS
+
+Example output:
+
+DNS Servers: 192.168.1.1
+
+Compare both IPs.
+
+Usually:
+
+✅ They are same.
+
+d) What Type of DNS query is it?
+
+Click query packet.
+
+Expand:
+
+Domain Name System
+
+Look for:
+
+Queries
+
+You’ll see:
+
+Type: A
+
+Meaning:
+
+Browser wants IPv4 address.
+Does query contain answers?
+
+Look for:
+
+Answers: 0
+
+Answer:
+
+No, the query message contains no answers.
+e) DNS Response — How many answers?
+
+Click:
+
+Standard query response
+
+Expand DNS section.
+
+Look for:
+
+Answer RRs:
+
+Example:
+
+Answer RRs: 2
+
+Means 2 answers.
+
+What do answers contain?
+
+Usually:
+
+Domain name
+IP address
+
+Example:
+
+www.ietf.org → 104.16.x.x
+f) TCP SYN Packet
+
+Now remove DNS filter.
+
+Use filter:
+
+tcp.flags.syn == 1
+
+Find SYN packet after DNS response.
+
+Compare Destination IP
+
+Look at:
+
+Destination Address
+
+Check if it matches DNS response IP.
+
+Usually:
+
+✅ YES
+
+Because browser now connects to resolved IP.
+
+g) Does browser issue new DNS queries for images?
+
+Look in packet list.
+
+You may see:
+
+Standard query ...
+
+before image downloads.
+
+How to Know
+
+If images come from:
+
+same server → usually NO new query
+different domain → YES new DNS query
+PART 2 — NSLOOKUP
+
+Now run:
+
+nslookup -type=NS mit.edu
+
+Keep Wireshark capturing with:
+
+dns
+h) To what IP is DNS query sent?
+
+Click query packet.
+
+Look at:
+
+Destination Address
+
+Usually your local DNS server.
+
+Compare with:
+
+nmcli dev show | grep DNS
+
+Usually:
+
+✅ Same IP.
+
+i) What type of query is it?
+
+Expand DNS → Queries.
+
+You’ll see:
+
+Type: NS
+
+Because you requested:
+
+-type=NS
+Does query contain answers?
+
+Usually:
+
+Answers: 0
+
+So:
+
+No, the query contains no answers.
+j) What MIT name servers are provided?
+
+In DNS response:
+
+Expand:
+
+Answers
+
+You’ll see entries like:
+
+bitsy.mit.edu
+w20ns.mit.edu
+
+These are MIT name servers.
+
+Does response also provide IP addresses?
+
+Look under:
+
+Additional records
+
+If A records are present:
+
+Yes, the response also provides IP addresses.
+
+Otherwise:
+
+No, only names are provided.
+SUPER IMPORTANT CHEAT SHEET
+Thing	Where to Find
+UDP/TCP	Expand UDP
+Port 53	UDP section
+DNS Type	DNS → Queries
+Answers count	DNS → Answer RRs
+IP addresses	DNS → Answers
+SYN packet	tcp.flags.syn == 1
+DNS server IP	IP Destination
+NS query	Type: NS
+Useful Filters
+Purpose	Filter
+DNS only	dns
+DNS Queries	dns.flags.response == 0
+DNS Responses	dns.flags.response == 1
+SYN packets	tcp.flags.syn == 1
+UDP only	udp
