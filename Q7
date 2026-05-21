@@ -1,0 +1,295 @@
+Step 2: Start Wireshark
+
+Open using:
+
+wireshark
+
+OR open from Applications menu.
+
+Step 3: Select Network Interface
+
+Choose:
+
+eth0, enp0s3 → Ethernet
+wlan0 → Wi-Fi
+
+Double-click the active interface.
+
+Step 4: Apply ICMP Filter
+
+In filter bar type:
+
+icmp
+
+Press Enter.
+
+Now only ICMP packets appear.
+
+Step 5: Generate ICMP Traffic
+
+Open another terminal.
+
+Run normal ping:
+
+ping www.google.com
+
+Let few packets generate.
+
+Then stop using:
+
+CTRL + C
+Step 6: Generate Fragmented ICMP Packets
+
+Now send larger packets:
+
+ping -s 2000 www.yahoo.com
+
+This creates packets larger than MTU and causes fragmentation.
+
+Stop after few packets:
+
+CTRL + C
+Step 7: Stop Wireshark Capture
+
+Click:
+
+Red Stop button
+
+Now analyze packets.
+
+Understanding Packet Structure
+
+Click any ICMP packet.
+
+Expand:
+
+Ethernet II
+Internet Protocol Version 4
+Internet Control Message Protocol
+Answers
+a) What is the IP address of your computer?
+
+Open first:
+
+ICMP Echo Request
+
+Expand:
+
+Internet Protocol Version 4
+
+Look for:
+
+Source Address
+
+Example:
+
+192.168.1.5
+
+That is your computer’s IP address.
+
+b) Upper layer protocol field value
+
+In IPv4 header locate:
+
+Protocol
+
+Value will be:
+
+1
+
+Meaning:
+
+ICMP
+
+IP protocol numbers:
+
+1 → ICMP
+6 → TCP
+17 → UDP
+c) IP header bytes and payload bytes
+
+Look for:
+
+Header Length
+
+Usually:
+
+20 bytes
+
+Payload size:
+
+Use:
+
+Total Length
+
+Formula:
+
+Payload = Total Length - Header Length
+
+Example:
+
+Field	Value
+Total Length	84 bytes
+Header Length	20 bytes
+
+Payload:
+
+84 - 20 = 64 bytes
+
+So payload = 64 bytes.
+
+d) Has the datagram been fragmented?
+
+Check fields:
+
+Flags
+Fragment Offset
+
+If:
+
+Fragment Offset = 0
+More Fragments = 0
+
+then:
+
+Packet is NOT fragmented.
+e) Fields that always change between ICMP packets
+
+These fields usually change:
+
+Field	Reason
+Identification	Unique packet ID
+Header Checksum	Recalculated
+TTL	May decrease
+Sequence Number (ICMP)	Incremented
+f) Fields that stay constant
+
+Usually constant:
+
+Field
+Source IP
+Destination IP
+Protocol
+Version
+Header Length
+g) After using ping -s 2000, has fragmentation occurred?
+
+Yes.
+
+Because Ethernet MTU is usually:
+
+1500 bytes
+
+A 2000-byte payload exceeds MTU.
+
+Wireshark will show:
+
+Multiple fragments
+Same Identification field
+
+You may see:
+
+Fragmented IP protocol
+h) First fragment details
+
+Open first fragment.
+
+Look for:
+
+Flags → More Fragments = 1
+Fragment Offset = 0
+
+This indicates:
+
+More fragments exist
+This is first fragment
+
+Total Length may be around:
+
+1500 bytes
+
+(depending on MTU)
+
+Information indicating fragmentation
+
+Look at:
+
+Field	Meaning
+More Fragments (MF) = 1	More fragments follow
+Fragment Offset	Position of fragment
+i) Information indicating NOT first fragment
+
+For later fragments:
+
+Fragment Offset > 0
+
+Example:
+
+Fragment Offset: 1480
+
+This means:
+
+Not first fragment
+
+If:
+
+MF = 1 → More fragments still exist
+MF = 0 → Last fragment
+j) Fields that change between first and second fragment
+
+Changed fields:
+
+Field	Reason
+Fragment Offset	Different data position
+Total Length	Fragment sizes differ
+More Fragments Flag	May change
+Header Checksum	Recomputed
+
+Fields staying same:
+
+Field
+Source IP
+Destination IP
+Identification
+How to Easily Identify Fragments in Wireshark
+
+Use filter:
+
+ip.flags.mf == 1 || ip.frag_offset > 0
+
+This shows fragmented packets only.
+
+Useful Wireshark Fields to Expand
+4
+
+Expand these sections:
+
+Ethernet II
+Internet Protocol Version 4
+Internet Control Message Protocol
+Important Viva Points
+ICMP Purpose
+
+ICMP is used for:
+
+Error reporting
+Network diagnostics
+Ping operation
+IP Fragmentation
+
+Occurs when:
+
+Packet size > MTU
+
+Then:
+
+Router breaks packet into fragments
+
+Receiver:
+
+Reassembles fragments
+Common Commands Summary
+Purpose	Command
+Start ping	ping www.google.com
+Large fragmented ping	ping -s 2000 www.yahoo.com
+Stop ping	CTRL + C
