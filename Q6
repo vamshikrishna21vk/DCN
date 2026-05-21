@@ -1,0 +1,290 @@
+6>Step-by-Step Execution of DHCP Packet Tracing using Wireshark
+Aim
+
+To capture and analyze DHCP packets using Wireshark and answer the given questions.
+
+Step 1: Install Required Tools
+Install Wireshark
+
+Download from:
+
+Wireshark Official Website
+
+Install DHCP Client (Linux)
+
+For Ubuntu/Debian:
+
+sudo apt update
+sudo apt install isc-dhcp-client
+Step 2: Open Wireshark
+Open Wireshark
+Select your active network interface:
+Ethernet → usually eth0 or enp0s3
+Wi-Fi → usually wlan0
+Click Start Capturing Packets
+Step 3: Apply DHCP Filter
+
+In the filter bar at the top, type:
+
+dhcp
+
+OR
+
+bootp
+
+(DHCP uses the BOOTP protocol format.)
+
+Press Enter.
+
+Step 4: Release Current IP Address
+
+Open terminal and execute:
+
+sudo dhclient -r
+
+This sends a DHCP Release message.
+
+You will see packets appear in Wireshark.
+
+Step 5: Renew IP Address
+
+Now renew the IP:
+
+sudo dhclient eth0
+
+(Replace eth0 with your interface name if different.)
+
+This triggers the DHCP process:
+
+DHCP Discover
+DHCP Offer
+DHCP Request
+DHCP ACK
+Step 6: Stop Capture
+
+After packets appear:
+
+Return to Wireshark
+Click the red stop button
+Step 7: Analyze DHCP Messages
+
+You will see packets like:
+
+DHCP Discover
+DHCP Offer
+DHCP Request
+DHCP ACK
+
+Click each packet and expand:
+
+Ethernet II
+Internet Protocol
+User Datagram Protocol
+Bootstrap Protocol (DHCP)
+Answers to Questions
+1. Are DHCP messages sent over UDP or TCP?
+
+DHCP messages are sent using:
+
+UDP
+
+Ports used:
+
+Client port → 68
+Server port → 67
+
+You can verify this under:
+
+User Datagram Protocol
+
+inside the packet details.
+
+a) What is the link-layer (Ethernet) address of your host?
+
+The link-layer address is your:
+
+MAC Address
+
+Find it under:
+
+Ethernet II → Source
+
+Example:
+
+08:00:27:ab:cd:ef
+b) What values differentiate DHCP Discover from DHCP Request?
+
+Main differences:
+
+Field	DHCP Discover	DHCP Request
+DHCP Message Type	Discover	Request
+Requested IP	Not present initially	Present
+Server Identifier	Not present	Present
+
+Check under:
+
+Bootstrap Protocol → Option 53
+Discover = 1
+Request = 3
+c) Transaction-ID values and purpose
+
+Find Transaction ID under:
+
+Bootstrap Protocol → Transaction ID
+
+Example:
+
+Message	Transaction ID
+Discover	0x3903F326
+Offer	0x3903F326
+Request	0x3903F326
+ACK	0x3903F326
+
+Usually the first four messages share the same Transaction ID.
+
+If another Request/ACK happens later, it may use a different ID.
+
+Purpose of Transaction ID
+
+It helps:
+
+Match requests and replies
+Identify which response belongs to which client request
+d) Source and Destination IP addresses used
+
+Since the client initially has no IP address:
+
+DHCP Message	Source IP	Destination IP
+Discover	0.0.0.0	255.255.255.255
+Offer	DHCP Server IP	255.255.255.255
+Request	0.0.0.0	255.255.255.255
+ACK	DHCP Server IP	255.255.255.255 or Client IP
+
+Important:
+
+0.0.0.0
+
+means:
+
+Client has no IP yet
+255.255.255.255
+
+means:
+
+Broadcast to all devices
+e) What is the IP address of the DHCP server?
+
+Find under:
+
+Bootstrap Protocol → DHCP Server Identifier
+
+Example:
+
+192.168.1.1
+
+OR check:
+
+Source IP address in Offer/ACK packet
+f) What IP address is being offered?
+
+Open the:
+
+DHCP Offer
+
+packet.
+
+Look for:
+
+Your (client) IP address
+
+Example:
+
+192.168.1.10
+
+The offered IP appears in:
+
+DHCP Offer packet
+g) Relay Agent Information
+
+Check:
+
+Gateway IP Address (giaddr)
+
+If:
+
+0.0.0.0
+
+then:
+
+No relay agent exists.
+
+If a relay agent exists:
+
+giaddr contains relay agent IP.
+
+Example:
+
+192.168.1.254
+
+Most home networks have:
+
+No relay agent
+h) Lease Time Purpose
+
+Lease time means:
+
+How long the client can use the assigned IP address.
+
+Find under:
+
+IP Address Lease Time
+
+Example:
+
+86400 seconds
+
+which equals:
+
+24 hours
+Purpose
+Prevents permanent allocation of unused IPs
+Allows IP reuse
+DHCP Release Message Purpose
+
+DHCP Release informs the server that:
+
+Client no longer needs the IP address
+
+This allows the server to:
+
+Return IP to available pool
+
+Command used:
+
+sudo dhclient -r
+Does DHCP Server acknowledge DHCP Release?
+
+Usually:
+
+No
+
+The server normally does NOT send acknowledgment for DHCP Release.
+
+Final Packet Flow Summary
+5
+Step	Message	Purpose
+1	Discover	Client searches for DHCP server
+2	Offer	Server offers IP
+3	Request	Client requests offered IP
+4	ACK	Server confirms allocation
+Viva/Presentation Tips
+
+You can explain DHCP using:
+
+DORA Process
+D → Discover
+O → Offer
+R → Request
+A → Acknowledge
+
+This is commonly asked in labs and viva exams.
