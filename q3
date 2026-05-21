@@ -1,0 +1,220 @@
+2. Open Wireshark
+
+Run:
+
+wireshark
+3. Select Network Interface
+
+You’ll see interfaces like:
+
+eth0
+wlan0
+enp0s3
+
+Choose the one showing traffic (usually Wi-Fi = wlan0).
+
+Double-click it.
+
+4. Start Capturing Only HTTP Packets
+
+In the filter bar at the top, type:
+
+http
+
+Press Enter.
+
+5. Open the URL in Browser
+
+Open Firefox/Chrome and visit:
+
+http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file1.html
+
+Then stop capture in Wireshark using the red square button.
+
+Part 1 — Basic HTTP GET/Response
+
+Look for packets like:
+
+GET /wireshark-labs/HTTP-wireshark-file1.html HTTP/1.1
+
+and:
+
+HTTP/1.1 200 OK
+
+Click packets and inspect details.
+
+Answers You Need to Find
+a) Browser HTTP version & Server HTTP version
+In GET packet:
+
+Expand:
+
+Hypertext Transfer Protocol
+
+You’ll see:
+
+GET ... HTTP/1.1
+
+Meaning:
+
+Browser uses HTTP/1.1
+In Response packet:
+
+You’ll see:
+
+HTTP/1.1 200 OK
+
+Meaning:
+
+Server also uses HTTP/1.1
+b) Languages accepted by browser
+
+In the GET request headers, find:
+
+Accept-Language:
+
+Example:
+
+Accept-Language: en-US,en;q=0.9
+
+This means browser accepts:
+
+English (US)
+English
+c) Status code returned
+
+In the response packet:
+
+HTTP/1.1 200 OK
+
+Status code:
+
+200 OK
+d) Last modified date
+
+In response headers, find:
+
+Last-Modified:
+
+Example:
+
+Last-Modified: Sat, 10 Dec 2022 12:30:00 GMT
+
+That is the answer.
+
+e) Number of bytes returned
+
+Find:
+
+Content-Length:
+
+Example:
+
+Content-Length: 128
+
+Means:
+
+128 bytes returned.
+Part 2 — HTTP Conditional GET
+
+Now repeat capture for:
+
+http://gaia.cs.umass.edu/wireshark-labs/HTTP-wireshark-file2.html
+Procedure
+First Request
+Start capture
+Open URL first time
+Stop capture
+Second Request (Important)
+Start capture again
+Refresh the page in browser
+Stop capture
+
+Now analyze both GET requests.
+
+Questions & Answers
+a) First GET — Is IF-MODIFIED-SINCE present?
+
+Open first GET packet.
+
+Look for:
+
+If-Modified-Since:
+
+Usually:
+
+NO, it is not present in the first request.
+
+Reason:
+Browser has not cached the file yet.
+
+b) Did server explicitly return file contents?
+
+Check server response.
+
+If you see:
+
+HTTP/1.1 200 OK
+
+AND:
+
+Content-Length:
+
+AND HTML data below,
+
+then:
+
+YES, server returned the file contents.
+c) Second GET — Is IF-MODIFIED-SINCE present?
+
+Open second GET packet.
+
+Now you should see:
+
+If-Modified-Since: <date>
+
+Example:
+
+If-Modified-Since: Sat, 10 Dec 2022 12:30:00 GMT
+
+This date comes from the earlier Last-Modified header.
+
+Status Code for Second GET
+
+Server usually replies:
+
+HTTP/1.1 304 Not Modified
+
+Meaning:
+
+File has NOT changed
+Browser should use cached copy
+Did server return file contents in second response?
+
+NO.
+
+How to tell:
+
+No HTML content
+Very small packet size
+No Content-Length
+Status code = 304 Not Modified
+Easy Summary Table
+Question	Expected Answer
+Browser HTTP Version	HTTP/1.1
+Server HTTP Version	HTTP/1.1
+Accepted Language	From Accept-Language header
+Status Code	200 OK
+Last Modified	From Last-Modified header
+Bytes Returned	From Content-Length
+First GET has IF-MODIFIED-SINCE?	No
+Second GET has IF-MODIFIED-SINCE?	Yes
+Second Response Code	304 Not Modified
+File returned again?	No
+Useful Wireshark Filters
+Purpose	Filter
+Only HTTP	http
+GET Requests	http.request.method == "GET"
+Responses	http.response
+Status 200	http.response.code == 200
+Status 304	http.response.code == 304
